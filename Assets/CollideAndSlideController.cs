@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.InputSystem;
-using TMPro;
 using System.Runtime.CompilerServices;
+using TMPro;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using Unity.VisualScripting;
 
 public class CollideAndSlideController : MonoBehaviour
 {
@@ -73,6 +74,12 @@ public class CollideAndSlideController : MonoBehaviour
         // Horizontal movement
         //multiply by rotation to ensure it is based on forward of the player
         moveAmount = transform.rotation * dir * speed * currentSprintMod;
+        Vector3 foundNormal;
+        if (OnSlope(out foundNormal))
+        {
+            moveAmount = ProjectAndScale(moveAmount, foundNormal);
+        }
+
         moveAmount = CollideAndSlide(moveAmount, transform.position, 0, false, moveAmount);
 
         // Gravity
@@ -82,9 +89,8 @@ public class CollideAndSlideController : MonoBehaviour
 
         Vector3 gravityMove = new Vector3(0, verticalVel, 0);
         moveAmount += CollideAndSlide(gravityMove, transform.position + moveAmount, 0, true, gravityMove);
-       
 
-
+        
 
         // Apply movement
         // Debug.Log(moveAmount);
@@ -161,6 +167,19 @@ public class CollideAndSlideController : MonoBehaviour
     {
         vec = Vector3.ProjectOnPlane(vec, normal);
         return vec;
+    }
+
+    private bool OnSlope(out Vector3 foundNormal)
+    {
+        
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, col.height + 0.3f))
+        {
+            float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
+            foundNormal = slopeHit.normal;
+            return angle < maxSlopeAngle && angle != 0;
+        }
+        foundNormal = Vector3.zero;
+        return false;
     }
 
     /*
