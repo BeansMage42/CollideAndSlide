@@ -49,8 +49,8 @@ public class CollideAndSlideController : MonoBehaviour
     private Vector3 moveAmount;
     private Vector3 p1, p2;
 
-    private Vector3 inputDir = Vector3.zero;
-    private Vector3 moveDir = Vector3.zero;
+    private Vector3 inputDir = Vector3.zero;//direction vector from the input
+    private Vector3 moveDir = Vector3.zero;//the direction the player moves in
   
 
     void Start()
@@ -83,6 +83,10 @@ public class CollideAndSlideController : MonoBehaviour
         
     }
 
+    //if there is input, lerp the move direction towards the input direction
+    //if there is no input, lerp the move direction towards 0
+    //this creates a smooth transition between the inputs and 
+    //allows for realistic drifting after input is released
     private void CalculateMoveDir()
     {
         if (inputDir != Vector3.zero)
@@ -98,6 +102,7 @@ public class CollideAndSlideController : MonoBehaviour
             }
         }
     }
+    //calculates speed based on the acceleration and deacceleration curves
     private void CalculateSpeed()
     {
         if (inputDir != Vector3.zero)
@@ -120,40 +125,16 @@ public class CollideAndSlideController : MonoBehaviour
     private void Move()
     {
         // Horizontal movement
-        //multiply by rotation to ensure it is based on forward of the player
 
-
-        /*if (currentSpeed < maxSpeed && moveDir.magnitude > 0)
-         {
-             Debug.Log("speeding up " + currentSpeed);
-             slideDir = moveDir;
-             currentSpeed += acceleration * Time.fixedDeltaTime;
-            // currentSpeed = accelerationCurve.Evaluate(Time.time);
-         }
-        else if(currentSpeed > 0 && moveDir.magnitude == 0)
-         {
-             Debug.Log("slowing down " + currentSpeed);
-             currentSpeed -= deacceleration * Time.fixedDeltaTime;
-             dir = slideDir;
-         }
-         if (currentSpeed < 0)
-         {
-             Debug.Log("clamped to 0");
-             currentSpeed = 0;
-         }
-         else if (currentSpeed > maxSpeed) 
-         {
-             Debug.Log("clamped to max");
-             currentSpeed = maxSpeed;
-         }*/
-        CalculateMoveDir();
-        CalculateSpeed();
+        CalculateMoveDir();//find the direction
+        CalculateSpeed();//find the speed
         
+        //multiply by rotation to ensure it is based on forward of the player
          moveAmount = transform.rotation * moveDir.normalized * currentSpeed;
 
-            Vector3 foundNormal;
        
         //adjusts vector to follow along the normal of a slope if any
+        Vector3 foundNormal;
         if (OnSlope(out foundNormal))
         {
             moveAmount = ProjectAndScale(moveAmount, foundNormal);
@@ -379,9 +360,5 @@ public class CollideAndSlideController : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
-    {
-       
-    }
 
 }
