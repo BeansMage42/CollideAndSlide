@@ -11,13 +11,14 @@ using UnityEngine.Rendering.Universal;
 
 public class CollideAndSlideController : MonoBehaviour
 {
-    [SerializeField] private AnimationCurve accelerationCurve;
+    
     float timeStamp;
     
     [Header("Movement Settings")]
     [SerializeField] private float maxSpeed = 5f;
-    [SerializeField] private float acceleration = 1f;
-    [SerializeField] private float deacceleration = 1f;
+    [SerializeField] private AnimationCurve accelerationCurve;
+    [SerializeField] private AnimationCurve deaccelerationCurve;
+    [SerializeField] private float directionChangeSmoothing;
     private float currentSpeed;
 
     [SerializeField] private float maxSlopeAngle = 55f;
@@ -44,11 +45,12 @@ public class CollideAndSlideController : MonoBehaviour
 
     [Header("Collision Settings")]
     [SerializeField] private LayerMask collideLayer;
-    private Vector3 moveDir = Vector3.zero;
-    private Vector3 slideDir = Vector3.zero;
+    
     private Vector3 moveAmount;
     private Vector3 p1, p2;
 
+    private Vector3 inputDir = Vector3.zero;
+    private Vector3 moveDir = Vector3.zero;
   
 
     void Start()
@@ -75,40 +77,79 @@ public class CollideAndSlideController : MonoBehaviour
     public void MoveDir(InputAction.CallbackContext context)
     {
         Vector2 input = context.ReadValue<Vector2>();
-        moveDir = new Vector3(input.x, 0, input.y);
+        if(context.performed) timeStamp = Time.time;
+        if(input.sqrMagnitude == 0 ) timeStamp = Time.time;
+        inputDir = new Vector3(input.x, 0, input.y);
         
     }
 
+    private void CalculateMoveDir()
+    {
+        if (inputDir != Vector3.zero)
+        {
+            moveDir = Vector3.Lerp(moveDir, inputDir, Time.fixedDeltaTime * directionChangeSmoothing);
+        }
+        else if(moveDir != Vector3.zero)
+        {
+            moveDir = Vector3.Lerp(moveDir, Vector3.zero, Time.fixedDeltaTime * directionChangeSmoothing);
+            if(moveDir.sqrMagnitude <= 0.1)
+            {
+                moveDir = Vector3.zero;
+            }
+        }
+    }
+    private void CalculateSpeed()
+    {
+        if (inputDir != Vector3.zero)
+        {
+            currentSpeed += accelerationCurve.Evaluate(Time.time - timeStamp);
+            if (currentSpeed > maxSpeed)
+            {
+                currentSpeed = maxSpeed;
+            }
+        }
+        else
+        {
+            currentSpeed -= deaccelerationCurve.Evaluate(Time.time - timeStamp);
+            if (currentSpeed < 0)
+            {
+                currentSpeed = 0;
+            }
+        }
+    }
     private void Move()
     {
         // Horizontal movement
         //multiply by rotation to ensure it is based on forward of the player
-        // moveAmount = transform.rotation * dir * speed * currentSprintMod;
-        Vector3 dir = moveDir;
-       if (currentSpeed < maxSpeed && moveDir.magnitude > 0)
-        {
-            Debug.Log("speeding up " + currentSpeed);
-            slideDir = moveDir;
-            currentSpeed += acceleration * Time.fixedDeltaTime;
-           // currentSpeed = accelerationCurve.Evaluate(Time.time);
-        }
-       else if(currentSpeed > 0 && moveDir.magnitude == 0)
-        {
-            Debug.Log("slowing down " + currentSpeed);
-            currentSpeed -= deacceleration * Time.fixedDeltaTime;
-            dir = slideDir;
-        }
-        if (currentSpeed < 0)
-        {
-            Debug.Log("clamped to 0");
-            currentSpeed = 0;
-        }
-        else if (currentSpeed > maxSpeed) 
-        {
-            Debug.Log("clamped to max");
-            currentSpeed = maxSpeed;
-        }
-        moveAmount = transform.rotation * dir.normalized * currentSpeed;
+
+
+        /*if (currentSpeed < maxSpeed && moveDir.magnitude > 0)
+         {
+             Debug.Log("speeding up " + currentSpeed);
+             slideDir = moveDir;
+             currentSpeed += acceleration * Time.fixedDeltaTime;
+            // currentSpeed = accelerationCurve.Evaluate(Time.time);
+         }
+        else if(currentSpeed > 0 && moveDir.magnitude == 0)
+         {
+             Debug.Log("slowing down " + currentSpeed);
+             currentSpeed -= deacceleration * Time.fixedDeltaTime;
+             dir = slideDir;
+         }
+         if (currentSpeed < 0)
+         {
+             Debug.Log("clamped to 0");
+             currentSpeed = 0;
+         }
+         else if (currentSpeed > maxSpeed) 
+         {
+             Debug.Log("clamped to max");
+             currentSpeed = maxSpeed;
+         }*/
+        CalculateMoveDir();
+        CalculateSpeed();
+        
+         moveAmount = transform.rotation * moveDir.normalized * currentSpeed;
 
             Vector3 foundNormal;
        
@@ -135,7 +176,7 @@ public class CollideAndSlideController : MonoBehaviour
         //allows stair climbing without gravity interrupting
         //checks for slopes to prevent weird jittering when climbing
         //runs after gravity simulation because gravity was preventing the smooth motion
-        if (!OnSlope(out foundNormal) && IsGrounded() && CanClimbStep() && dir.magnitude >0) moveAmount.y = stepSmoothing;
+        if (!OnSlope(out foundNormal) && IsGrounded() && CanClimbStep() && moveDir.magnitude >0) moveAmount.y = stepSmoothing;
 
 
         // Apply movement
