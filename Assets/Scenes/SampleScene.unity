@@ -8304,7 +8304,7 @@ Transform:
   m_GameObject: {fileID: 1199103927}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.209999, y: 0.06, z: -2.4990702}
+  m_LocalPosition: {x: 3.209999, y: -0.181, z: -2.4990702}
   m_LocalScale: {x: 1, y: 1, z: 3.3131}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14705,7 +14705,7 @@ Transform:
   m_GameObject: {fileID: 1968473988}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.1599998, y: 4.84, z: 29.99}
+  m_LocalPosition: {x: 2.1599998, y: 4.21, z: 29.99}
   m_LocalScale: {x: 57.887157, y: 2.4849002, z: 28.477158}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15229,7 +15229,7 @@ Transform:
   m_GameObject: {fileID: 2038948554}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.209999, y: 0.34, z: -4.71}
+  m_LocalPosition: {x: 3.209999, y: 0.17300001, z: -4.71}
   m_LocalScale: {x: 1, y: 1, z: 3.3131}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15245,7 +15245,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2278909802905226999, guid: 9fd25a33671e2ef4daa9674829de9ddd, type: 3}
       propertyPath: speed
-      value: 0.5
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 2278909802905226999, guid: 9fd25a33671e2ef4daa9674829de9ddd, type: 3}
+      propertyPath: maxSpeed
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 2278909802905226999, guid: 9fd25a33671e2ef4daa9674829de9ddd, type: 3}
+      propertyPath: acceleration
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 2278909802905226999, guid: 9fd25a33671e2ef4daa9674829de9ddd, type: 3}
       propertyPath: gravityScale
@@ -15258,6 +15266,18 @@ PrefabInstance:
     - target: {fileID: 2278909802905226999, guid: 9fd25a33671e2ef4daa9674829de9ddd, type: 3}
       propertyPath: maxJumpHeight
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2278909802905226999, guid: 9fd25a33671e2ef4daa9674829de9ddd, type: 3}
+      propertyPath: stepSmoothing
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2278909802905226999, guid: 9fd25a33671e2ef4daa9674829de9ddd, type: 3}
+      propertyPath: deacceleration
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 2278909802905226999, guid: 9fd25a33671e2ef4daa9674829de9ddd, type: 3}
+      propertyPath: maxStairheight
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 2278909802905226999, guid: 9fd25a33671e2ef4daa9674829de9ddd, type: 3}
       propertyPath: maxJumpVelocity
@@ -16311,6 +16331,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 410087041}
   - {fileID: 832575519}
-  - {fileID: 986161455}
   - {fileID: 2051312101}
+  - {fileID: 986161455}
   - {fileID: 241529830}

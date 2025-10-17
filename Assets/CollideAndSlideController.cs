@@ -11,10 +11,15 @@ using UnityEngine.Rendering.Universal;
 
 public class CollideAndSlideController : MonoBehaviour
 {
-   
+    [SerializeField] private AnimationCurve accelerationCurve;
+    float timeStamp;
     
     [Header("Movement Settings")]
-    [SerializeField] private float speed = 5f;
+    [SerializeField] private float maxSpeed = 5f;
+    [SerializeField] private float acceleration = 1f;
+    [SerializeField] private float deacceleration = 1f;
+    private float currentSpeed;
+
     [SerializeField] private float maxSlopeAngle = 55f;
     [SerializeField] private int maxBounces = 5;
     [SerializeField] private float skinWidth = 0.015f;
@@ -23,12 +28,15 @@ public class CollideAndSlideController : MonoBehaviour
     [SerializeField] private float maxSprintMod;
     [SerializeField] private float jumpVelocity;
     [SerializeField] private float gravityScale = 1;
+    
     float verticalVel;
     private float currentSprintMod = 1;
     private Vector2 look;
-    //COMPONENTS
-   
-    
+
+    [Header("Stair Climbing")]
+    [SerializeField] private float maxStairheight;
+    [SerializeField] private float stepSmoothing;
+
     [Header("Components")]
     [SerializeField] private GameObject camRotPoint;
     private CapsuleCollider col;
@@ -37,6 +45,7 @@ public class CollideAndSlideController : MonoBehaviour
     [Header("Collision Settings")]
     [SerializeField] private LayerMask collideLayer;
     private Vector3 moveDir = Vector3.zero;
+    private Vector3 slideDir = Vector3.zero;
     private Vector3 moveAmount;
     private Vector3 p1, p2;
 
@@ -58,49 +67,83 @@ public class CollideAndSlideController : MonoBehaviour
     {
 
         // rb.MovePosition( transform.position + (transform.rotation * moveDir * moveSpeed * currentSprintMod));
-       
-        Move(moveDir.normalized);
+        
+        Move();
         if (IsGrounded() && verticalVel < 0) verticalVel = 0;
 
     }
     public void MoveDir(InputAction.CallbackContext context)
     {
-        Vector2 input = context.ReadValue<Vector2>().normalized;
+        Vector2 input = context.ReadValue<Vector2>();
         moveDir = new Vector3(input.x, 0, input.y);
+        
     }
 
-    private void Move(Vector3 dir)
+    private void Move()
     {
         // Horizontal movement
         //multiply by rotation to ensure it is based on forward of the player
-        moveAmount = transform.rotation * dir * speed * currentSprintMod;
-        Vector3 foundNormal;
+        // moveAmount = transform.rotation * dir * speed * currentSprintMod;
+        Vector3 dir = moveDir;
+       if (currentSpeed < maxSpeed && moveDir.magnitude > 0)
+        {
+            Debug.Log("speeding up " + currentSpeed);
+            slideDir = moveDir;
+            currentSpeed += acceleration * Time.fixedDeltaTime;
+           // currentSpeed = accelerationCurve.Evaluate(Time.time);
+        }
+       else if(currentSpeed > 0 && moveDir.magnitude == 0)
+        {
+            Debug.Log("slowing down " + currentSpeed);
+            currentSpeed -= deacceleration * Time.fixedDeltaTime;
+            dir = slideDir;
+        }
+        if (currentSpeed < 0)
+        {
+            Debug.Log("clamped to 0");
+            currentSpeed = 0;
+        }
+        else if (currentSpeed > maxSpeed) 
+        {
+            Debug.Log("clamped to max");
+            currentSpeed = maxSpeed;
+        }
+        moveAmount = transform.rotation * dir.normalized * currentSpeed;
+
+            Vector3 foundNormal;
+       
+        //adjusts vector to follow along the normal of a slope if any
         if (OnSlope(out foundNormal))
         {
             moveAmount = ProjectAndScale(moveAmount, foundNormal);
         }
-
+        
+        //collide and slide baby
         moveAmount = CollideAndSlide(moveAmount, transform.position, 0, false, moveAmount);
+
+        //cielings stop vertical momentum
         if (verticalVel > 0 && CielingCheck())
         {
             verticalVel = 0;
         }
+
         // Gravity
         verticalVel += (Physics.gravity.y * 2f * Time.fixedDeltaTime * gravityScale);
-        
-        
-
         Vector3 gravityMove = new Vector3(0, verticalVel * Time.fixedDeltaTime, 0);
         moveAmount += CollideAndSlide(gravityMove, transform.position + moveAmount, 0, true, gravityMove);
 
-        
+        //allows stair climbing without gravity interrupting
+        //checks for slopes to prevent weird jittering when climbing
+        //runs after gravity simulation because gravity was preventing the smooth motion
+        if (!OnSlope(out foundNormal) && IsGrounded() && CanClimbStep() && dir.magnitude >0) moveAmount.y = stepSmoothing;
+
 
         // Apply movement
-        // Debug.Log(moveAmount);
+
         rb.MovePosition(transform.position + moveAmount);
         
     }
-    RaycastHit[] groundDetection = new RaycastHit[5];
+    RaycastHit[] groundDetection = new RaycastHit[3];
     private bool IsGrounded()
     {
         Vector3 center = transform.position + transform.rotation * col.center;
@@ -110,7 +153,7 @@ public class CollideAndSlideController : MonoBehaviour
         return (Physics.SphereCastNonAlloc(origin, radius, Vector3.down, groundDetection, 0.3f, collideLayer) > 0);
     }
 
-    Collider[] cielingDetection = new Collider[5];
+    Collider[] cielingDetection = new Collider[3];
     private bool CielingCheck()
     {
         Vector3 center = transform.position + transform.rotation * col.center;
@@ -198,6 +241,26 @@ public class CollideAndSlideController : MonoBehaviour
         return false;
     }
 
+    private bool CanClimbStep()
+    {
+        RaycastHit minHit;
+        Vector3 center = transform.position + transform.rotation * col.center;
+        Vector3 origin = new Vector3(center.x, col.bounds.min.y + 0.02f, center.z);
+        Debug.DrawRay(origin,  transform.forward * (0.2f + col.radius), Color.red, 0.1f);
+        if (Physics.Raycast(origin, transform.forward, out minHit, (0.2f + col.radius), collideLayer))
+        {
+            Debug.Log("found object at feet");
+            RaycastHit maxHit;
+            Debug.DrawRay(origin + Vector3.up * maxStairheight, transform.forward * (0.3f + col.radius), Color.yellow, 0.1f);
+            if (!Physics.Raycast(origin + Vector3.up * maxStairheight, transform.forward, out maxHit,(0.3f+col.radius), collideLayer))
+            {
+                Debug.Log("can step up");
+                return true;
+            }
+        }
+        return false;
+    }
+
     /*
      * The look function takes the players mouse delta and translates it to camera rotation
      * 
@@ -277,13 +340,7 @@ public class CollideAndSlideController : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Vector3 center = transform.position + transform.rotation * col.center;
-        float radius = col.radius;
-        Vector3 origin = new Vector3(center.x, col.bounds.max.y, center.z);
-        Vector3 origin2 = origin + Vector3.up * 0.3f;
-       // bool cieling = Physics.SphereCast(origin, radius, Vector3.up, out _, 0.3f, collideLayer);
-        Gizmos.DrawWireSphere(origin, radius);
-        Gizmos.DrawWireSphere(origin2, radius);
+       
     }
 
 }
