@@ -81,13 +81,16 @@ public class CollideAndSlideController : MonoBehaviour
         }
 
         moveAmount = CollideAndSlide(moveAmount, transform.position, 0, false, moveAmount);
-
+        if (verticalVel > 0 && CielingCheck())
+        {
+            verticalVel = 0;
+        }
         // Gravity
-        verticalVel += (Physics.gravity.y * Time.fixedDeltaTime * gravityScale);
+        verticalVel += (Physics.gravity.y * 2f * Time.fixedDeltaTime * gravityScale);
         
         
 
-        Vector3 gravityMove = new Vector3(0, verticalVel, 0);
+        Vector3 gravityMove = new Vector3(0, verticalVel * Time.fixedDeltaTime, 0);
         moveAmount += CollideAndSlide(gravityMove, transform.position + moveAmount, 0, true, gravityMove);
 
         
@@ -97,13 +100,26 @@ public class CollideAndSlideController : MonoBehaviour
         rb.MovePosition(transform.position + moveAmount);
         
     }
-
+    RaycastHit[] groundDetection = new RaycastHit[5];
     private bool IsGrounded()
     {
         Vector3 center = transform.position + transform.rotation * col.center;
         float radius = col.radius * 0.9f;
         Vector3 origin = new Vector3(center.x, col.bounds.min.y + radius + 0.01f, center.z);
-        return Physics.SphereCast(origin, radius, Vector3.down, out _, 0.3f, collideLayer);
+        
+        return (Physics.SphereCastNonAlloc(origin, radius, Vector3.down, groundDetection, 0.3f, collideLayer) > 0);
+    }
+
+    Collider[] cielingDetection = new Collider[5];
+    private bool CielingCheck()
+    {
+        Vector3 center = transform.position + transform.rotation * col.center;
+        float radius = col.radius;
+        Vector3 origin = new Vector3(center.x, col.bounds.max.y-0.01f, center.z);
+        //bool cieling = Physics.SphereCast(origin, radius, Vector3.up, out _, 0.3f, collideLayer);
+        // Physics.over
+        // Debug.Log(cieling);
+        return (Physics.OverlapSphereNonAlloc(origin, radius, cielingDetection ,collideLayer) > 0);
     }
 
     private Vector3 CollideAndSlide(Vector3 vel, Vector3 startPos, int depth, bool gravityPass, Vector3 velInit)
@@ -123,7 +139,7 @@ public class CollideAndSlideController : MonoBehaviour
         float dist = vel.magnitude + skinWidth;
         if (Physics.CapsuleCast(p1, p2, col.radius, vel.normalized, out RaycastHit hit, dist, collideLayer))
         {
-            Debug.Log("hit " + hit.collider.name);
+           // Debug.Log("hit " + hit.collider.name);
             //Vector3 snapToSurface = vel.normalized * (hit.distance + skinWidth);
             Vector3 snapToSurface = vel.normalized * (hit.distance-skinWidth)/*Mathf.Max(hit.distance - skinWidth, 0)*/;
             Vector3 leftOver = vel - snapToSurface;
@@ -136,7 +152,7 @@ public class CollideAndSlideController : MonoBehaviour
             {
                 if (gravityPass)
                 {
-                    Debug.Log("snap");
+                  //  Debug.Log("snap");
                     return snapToSurface;
                 }
 
@@ -159,7 +175,7 @@ public class CollideAndSlideController : MonoBehaviour
 
             return snapToSurface + CollideAndSlide(leftOver, startPos + snapToSurface, depth + 1, gravityPass, velInit);
         }
-        Debug.Log("end of loop");
+      //  Debug.Log("end of loop");
         return vel;
     }
 
@@ -253,10 +269,21 @@ public class CollideAndSlideController : MonoBehaviour
    
     public void Jump(InputAction.CallbackContext context)
     {
-        if(context.performed && IsGrounded())
+        if(context.performed && IsGrounded() && !CielingCheck())
         {
             verticalVel = jumpVelocity;
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Vector3 center = transform.position + transform.rotation * col.center;
+        float radius = col.radius;
+        Vector3 origin = new Vector3(center.x, col.bounds.max.y, center.z);
+        Vector3 origin2 = origin + Vector3.up * 0.3f;
+       // bool cieling = Physics.SphereCast(origin, radius, Vector3.up, out _, 0.3f, collideLayer);
+        Gizmos.DrawWireSphere(origin, radius);
+        Gizmos.DrawWireSphere(origin2, radius);
     }
 
 }
