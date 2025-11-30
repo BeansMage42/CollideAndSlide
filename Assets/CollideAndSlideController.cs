@@ -1,17 +1,12 @@
 using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 
 public class CollideAndSlideController : MonoBehaviour
 {
-    
+
+    private PlayerMovementState currentMoveState;
+
     float timeStamp;
     
     [Header("Movement Settings")]
@@ -27,6 +22,7 @@ public class CollideAndSlideController : MonoBehaviour
     [SerializeField] private float rotSpeed;
     [SerializeField] private float minYAngle, maxYAngle;
     [SerializeField] private float maxSprintMod;
+    [SerializeField] private float maxCrouchSpeed;
     [SerializeField] private float jumpVelocity;
     [SerializeField] private float gravityScale = 1;
     
@@ -37,6 +33,16 @@ public class CollideAndSlideController : MonoBehaviour
     [Header("Stair Climbing")]
     [SerializeField] private float maxStairheight;
     [SerializeField] private float stepSmoothing;
+    [Header("Wallrunning")]
+    [SerializeField] private float minHeight;
+    private Vector3 wallNormal;
+    private Vector3 wallRunDir;
+    [SerializeField] private float wallRunMaxDist;
+    [SerializeField] private float wallRunCoolDown;
+    private WaitForSeconds coolDown;
+    private Vector3 startPos;
+    bool canWallRun = true;
+    
 
     [Header("Components")]
     [SerializeField] private GameObject camRotPoint;
@@ -59,6 +65,7 @@ public class CollideAndSlideController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         col = GetComponent<CapsuleCollider>();
         rb.isKinematic = true;
+        coolDown = new WaitForSeconds(wallRunCoolDown);
     }
     
     void Update()
@@ -69,8 +76,15 @@ public class CollideAndSlideController : MonoBehaviour
     {
 
         // rb.MovePosition( transform.position + (transform.rotation * moveDir * moveSpeed * currentSprintMod));
-        
-        Move();
+        WallRunCheck();
+        if (currentMoveState == PlayerMovementState.wallRunning)
+        {
+            WallRunMove();
+        }
+        else
+        {
+            Move();
+        }
         if (IsGrounded() && verticalVel < 0) verticalVel = 0;
 
     }
@@ -81,6 +95,97 @@ public class CollideAndSlideController : MonoBehaviour
         if(input.sqrMagnitude == 0 ) timeStamp = Time.time;
         inputDir = new Vector3(input.x, 0, input.y);
         
+    }
+    /// <summary>
+    /// Checks if you have met the conditions to start wall running
+    /// </summary>
+    private void WallRunCheck()
+    {
+        if (!IsGrounded() && currentSpeed > 0.1f && canWallRun)
+        {
+
+            Vector3 center = transform.position + transform.rotation * col.center;
+            Vector3 origin = new Vector3(center.x, col.bounds.center.y, center.z);
+            Vector3 upper45 = Quaternion.AngleAxis(45f, Vector3.up) * transform.forward;
+            Vector3 lower45 = Quaternion.AngleAxis(-45f, Vector3.up) * transform.forward;
+            RaycastHit hit;
+            Debug.Log("starting wall checks");
+            Debug.DrawRay(origin, transform.forward.normalized * (col.radius + 0.3f), Color.pink, 2f);
+            if (Physics.Raycast(origin, transform.forward, out hit, col.radius + 0.3f, collideLayer) ||
+                Physics.Raycast(origin, upper45, out hit, col.radius + 0.3f, collideLayer) ||
+                Physics.Raycast(origin, lower45, out hit, col.radius + 0.3f, collideLayer))
+            {
+                if (currentMoveState != PlayerMovementState.wallRunning)
+                {
+                    Debug.Log("wallrun hit");
+                    if (!Physics.Raycast(col.center, Vector3.down, minHeight + col.bounds.extents.y, collideLayer))
+                    {
+                        currentMoveState = PlayerMovementState.wallRunning;
+                        canWallRun = false;
+                        startPos = transform.position;
+                        wallRunDir = transform.forward;
+                        currentSpeed = maxSpeed * maxSprintMod;
+                        verticalVel = 0;
+                        wallNormal = hit.normal;
+                    }
+                }
+
+            }
+
+        }
+    }
+    /// <summary>
+    /// WALL RUNNING
+    /// 
+    /// Calculates movement along the normal of the wall hit
+    /// checks if you are going to hit another wall or if the wall you were on ended
+    /// works best on flat planes, cant go around corners or curves
+    /// </summary>
+    private void WallRunMove()
+    {
+        Debug.Log("wall run");
+        Vector3 dir = ProjectAndScale(new Vector3(wallRunDir.normalized.x, 0,wallRunDir.normalized.z), wallNormal);
+        
+       
+        Vector3 center = transform.position + transform.rotation * col.center;
+        Vector3 origin = new Vector3(center.x, col.bounds.center.y, center.z);
+        if (Physics.Raycast(origin,-wallNormal,col.radius + 0.3f,collideLayer))
+        {
+            if (Vector3.Distance(startPos, transform.position) < wallRunMaxDist)
+            {
+
+                Debug.DrawRay(transform.position, dir * maxSprintMod * maxSpeed, Color.blue, 5f);
+                Debug.Log(" clump " + transform.position + dir * 10);
+                moveAmount = CollideAndSlide(dir *currentSpeed, transform.position, maxBounces-1,false, dir * maxSprintMod * maxSpeed);
+                if(moveAmount.magnitude < 0.1f)
+                {
+                    Debug.Log("hit anotherwall");
+                    StartCoroutine(WallRunCoolDown());
+                }
+                rb.MovePosition(transform.position + moveAmount);
+
+            }
+            else
+            {
+                Debug.Log("stop run distance");
+                
+                StartCoroutine(WallRunCoolDown());
+            }
+        }
+        else
+        {
+            Debug.Log("run out of wall");
+            
+            StartCoroutine(WallRunCoolDown());
+
+        }
+
+    }
+    private IEnumerator WallRunCoolDown()
+    {
+        currentMoveState = PlayerMovementState.walking;
+        yield return coolDown;
+        canWallRun = true;
     }
 
     //if there is input, lerp the move direction towards the input direction
@@ -110,7 +215,7 @@ public class CollideAndSlideController : MonoBehaviour
             currentSpeed += accelerationCurve.Evaluate(Time.time - timeStamp);
             if (currentSpeed > maxSpeed)
             {
-                currentSpeed = maxSpeed;
+                currentSpeed = maxSpeed * currentSprintMod;
             }
         }
         else
@@ -157,14 +262,22 @@ public class CollideAndSlideController : MonoBehaviour
         //allows stair climbing without gravity interrupting
         //checks for slopes to prevent weird jittering when climbing
         //runs after gravity simulation because gravity was preventing the smooth motion
-        if (!OnSlope(out foundNormal) && IsGrounded() && CanClimbStep() && moveDir.magnitude >0) moveAmount.y = stepSmoothing;
-
+        
+        if (moveDir.magnitude > 0) 
+        {
+            if (IsGrounded())
+            {
+                if (!OnSlope(out foundNormal) && CanClimbStep(col.bounds.min.y + 0.02f, maxStairheight)) moveAmount.y = stepSmoothing;
+            }
+        }
 
         // Apply movement
 
         rb.MovePosition(transform.position + moveAmount);
         
     }
+
+    
     RaycastHit[] groundDetection = new RaycastHit[3];
     private bool IsGrounded()
     {
@@ -204,9 +317,7 @@ public class CollideAndSlideController : MonoBehaviour
         float dist = vel.magnitude + skinWidth;
         if (Physics.CapsuleCast(p1, p2, col.radius, vel.normalized, out RaycastHit hit, dist, collideLayer))
         {
-           // Debug.Log("hit " + hit.collider.name);
-            //Vector3 snapToSurface = vel.normalized * (hit.distance + skinWidth);
-            Vector3 snapToSurface = vel.normalized * (hit.distance-skinWidth)/*Mathf.Max(hit.distance - skinWidth, 0)*/;
+            Vector3 snapToSurface = vel.normalized * (hit.distance-skinWidth);
             Vector3 leftOver = vel - snapToSurface;
             float angle = Vector3.Angle(Vector3.up, hit.normal);
 
@@ -225,6 +336,7 @@ public class CollideAndSlideController : MonoBehaviour
             }
             else
             {
+                //scale based on angle against wall
                 float scale = 1-Vector3.Dot(new Vector3(hit.normal.x,0,hit.normal.z).normalized, - new Vector3(velInit.x,0,velInit.z).normalized);
                 // Stop against vertical walls
                 if (IsGrounded() && !gravityPass)
@@ -234,6 +346,7 @@ public class CollideAndSlideController : MonoBehaviour
                 }
                 else
                 {
+                    
                     leftOver = ProjectAndScale(leftOver, hit.normal)*scale;
                 }
             }
@@ -263,25 +376,38 @@ public class CollideAndSlideController : MonoBehaviour
         return false;
     }
 
-    private bool CanClimbStep()
+    private bool CanClimbStep(float originY, float maxHeight)
+    {
+        Vector3 center = transform.position + transform.rotation * col.center;
+        Vector3 origin = new Vector3(center.x, originY, center.z);
+        Vector3 upper45 =  Quaternion.AngleAxis( 45f, Vector3.up) * transform.forward;
+        Vector3 lower45 =  Quaternion.AngleAxis( -45f, Vector3.up) * transform.forward;
+
+        if(DetectEdgeAndSurface(origin,transform.forward,maxHeight) ||  DetectEdgeAndSurface(origin,upper45, maxHeight) || DetectEdgeAndSurface(origin, lower45, maxHeight))
+        {
+            return true;
+        }
+        return false;
+        
+    }
+    //checks if there is something blocking path, if there is check if its at the reach height
+    private bool DetectEdgeAndSurface(Vector3 origin,  Vector3 direction, float height)
     {
         RaycastHit minHit;
-        Vector3 center = transform.position + transform.rotation * col.center;
-        Vector3 origin = new Vector3(center.x, col.bounds.min.y + 0.02f, center.z);
-        Debug.DrawRay(origin,  transform.forward * (0.2f + col.radius), Color.red, 0.1f);
-        if (Physics.Raycast(origin, transform.forward, out minHit, (0.2f + col.radius), collideLayer))
+        Debug.DrawRay(origin, direction * (0.2f + col.radius), Color.red, 0.1f);
+        if (Physics.Raycast(origin, direction, out minHit, (0.2f + col.radius), collideLayer))
         {
-            Debug.Log("found object at feet");
             RaycastHit maxHit;
-            Debug.DrawRay(origin + Vector3.up * maxStairheight, transform.forward * (0.3f + col.radius), Color.yellow, 0.1f);
-            if (!Physics.Raycast(origin + Vector3.up * maxStairheight, transform.forward, out maxHit,(0.3f+col.radius), collideLayer))
+            Debug.DrawRay(origin + Vector3.up * height, direction * (0.3f + col.radius), Color.yellow, 0.1f);
+            if (!Physics.Raycast(origin + Vector3.up * height, direction, out maxHit, (0.3f + col.radius), collideLayer))
             {
-                Debug.Log("can step up");
                 return true;
             }
         }
         return false;
     }
+
+    
 
     /*
      * The look function takes the players mouse delta and translates it to camera rotation
@@ -340,13 +466,28 @@ public class CollideAndSlideController : MonoBehaviour
         if (context.started)
         { 
             currentSprintMod = maxSprintMod;
-            Camera.main.fieldOfView = 80;
+           // Camera.main.fieldOfView = 80;
 
         }
         if (context.canceled)
         {
             currentSprintMod = 1;
-            Camera.main.fieldOfView = 60;
+           // Camera.main.fieldOfView = 60;
+        }
+
+    }
+    public void CrouchToggle(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+            currentSprintMod = maxCrouchSpeed;
+            // Camera.main.fieldOfView = 80;
+
+        }
+        if (context.canceled)
+        {
+            currentSprintMod = 1;
+            // Camera.main.fieldOfView = 60;
         }
 
     }
@@ -358,7 +499,24 @@ public class CollideAndSlideController : MonoBehaviour
         {
             verticalVel = jumpVelocity;
         }
+        else if(context.performed && currentMoveState == PlayerMovementState.wallRunning)
+        {
+            StartCoroutine(WallRunCoolDown());
+            Debug.Log("jump cancel");
+            verticalVel = jumpVelocity;
+            
+        }
     }
 
+}
 
+public enum PlayerMovementState
+{
+    idle,
+    walking,
+    sprinting,
+    crouching,
+    climbing,
+    vaulting,
+    wallRunning
 }
