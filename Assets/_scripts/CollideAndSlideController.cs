@@ -23,6 +23,7 @@ public class CollideAndSlideController : MonoBehaviour
     [SerializeField] private float minYAngle, maxYAngle;
     [SerializeField] private float maxSprintMod;
     [SerializeField] private float maxCrouchSpeed;
+    [SerializeField] private float maxAirSpeedMod = 1;
     [SerializeField] private float jumpVelocity;
     [SerializeField] private float gravityScale = 1;
     
@@ -57,8 +58,8 @@ public class CollideAndSlideController : MonoBehaviour
 
     private Vector3 inputDir = Vector3.zero;//direction vector from the input
     private Vector3 moveDir = Vector3.zero;//the direction the player moves in
-  
 
+    private bool airControlOff = false;
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
@@ -75,7 +76,6 @@ public class CollideAndSlideController : MonoBehaviour
     private void FixedUpdate()
     {
 
-        // rb.MovePosition( transform.position + (transform.rotation * moveDir * moveSpeed * currentSprintMod));
         WallRunCheck();
         if (currentMoveState == PlayerMovementState.wallRunning)
         {
@@ -91,7 +91,7 @@ public class CollideAndSlideController : MonoBehaviour
     public void MoveDir(InputAction.CallbackContext context)
     {
         Vector2 input = context.ReadValue<Vector2>();
-        if(context.performed) timeStamp = Time.time;
+        if(context.performed && inputDir.magnitude == 0) timeStamp = Time.time;
         if(input.sqrMagnitude == 0 ) timeStamp = Time.time;
         inputDir = new Vector3(input.x, 0, input.y);
         
@@ -174,9 +174,23 @@ public class CollideAndSlideController : MonoBehaviour
         }
         else
         {
-            Debug.Log("run out of wall");
-            
             StartCoroutine(WallRunCoolDown());
+            Debug.Log("run out of wall");
+            StartCoroutine(AirSpeedControlTimer());
+            
+            Vector3 away = wallNormal.normalized;
+
+            Vector3 jumpDir =
+                wallRunDir * maxSpeed * maxSprintMod * 3 +
+                away * maxSpeed * maxSprintMod * 2;
+
+            jumpDir.Normalize();
+
+            // Apply horizontal burst
+            moveDir = transform.InverseTransformDirection(jumpDir);
+            currentSpeed = maxSpeed * maxSprintMod * 2;
+
+            verticalVel = jumpVelocity;
 
         }
 
@@ -194,6 +208,11 @@ public class CollideAndSlideController : MonoBehaviour
     //allows for realistic drifting after input is released
     private void CalculateMoveDir()
     {
+        if (airControlOff)
+        {
+            if (IsGrounded()) airControlOff = false;
+            else return;
+        }
         if (inputDir != Vector3.zero)
         {
             moveDir = Vector3.Lerp(moveDir, inputDir, Time.fixedDeltaTime * directionChangeSmoothing);
@@ -212,15 +231,15 @@ public class CollideAndSlideController : MonoBehaviour
     {
         if (inputDir != Vector3.zero)
         {
-            currentSpeed += accelerationCurve.Evaluate(Time.time - timeStamp);
+            currentSpeed = (maxSpeed * currentSprintMod) * accelerationCurve.Evaluate(Time.time - timeStamp);
             if (currentSpeed > maxSpeed)
             {
-                currentSpeed = maxSpeed * currentSprintMod;
+                currentSpeed = maxSpeed * currentSprintMod * maxAirSpeedMod;
             }
         }
         else
         {
-            currentSpeed -= deaccelerationCurve.Evaluate(Time.time - timeStamp);
+            currentSpeed = (maxSpeed * currentSprintMod * maxAirSpeedMod) * deaccelerationCurve.Evaluate(Time.time - timeStamp);
             if (currentSpeed < 0)
             {
                 currentSpeed = 0;
@@ -502,10 +521,32 @@ public class CollideAndSlideController : MonoBehaviour
         else if(context.performed && currentMoveState == PlayerMovementState.wallRunning)
         {
             StartCoroutine(WallRunCoolDown());
+            StartCoroutine(AirSpeedControlTimer());
             Debug.Log("jump cancel");
-            verticalVel = jumpVelocity;
+            Vector3 away = wallNormal.normalized;
+
+            Vector3 jumpDir =
+                wallRunDir * maxSpeed * maxSprintMod * 2 +
+                away * maxSpeed * maxSprintMod * 3;
+
+            jumpDir.Normalize();
+
+            // Apply horizontal burst
+            moveDir = transform.InverseTransformDirection(jumpDir);
+            currentSpeed = maxSpeed * maxSprintMod *  2;
+
+            verticalVel = jumpVelocity * 1.2f;
             
         }
+    }
+
+    private IEnumerator AirSpeedControlTimer()
+    {
+        maxAirSpeedMod = 2f;
+        airControlOff = true;
+        yield return new WaitForSeconds(0.2f);
+        maxAirSpeedMod = 1f;
+        airControlOff = false;
     }
 
 }

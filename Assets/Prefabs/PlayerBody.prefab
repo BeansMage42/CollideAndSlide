@@ -148,9 +148,9 @@ GameObject:
   - component: {fileID: 7742221735477402439}
   - component: {fileID: 2373771558470694417}
   - component: {fileID: 4371513559377076954}
+  - component: {fileID: 2278909802905226999}
   - component: {fileID: 8036465444530213857}
-  - component: {fileID: 4722565026801790198}
-  - component: {fileID: 3698767906036118582}
+  - component: {fileID: 153947711928997032}
   m_Layer: 0
   m_Name: PlayerBody
   m_TagString: Player
@@ -225,6 +225,87 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!114 &2278909802905226999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4038720357806462293}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42f5cafb6a8b02d41a77e565f6825fb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CollideAndSlideController
+  maxSpeed: 0.25
+  accelerationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1.9125242
+      value: 0.9828232
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  deaccelerationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0.029167175
+      value: 0.9904785
+      inSlope: 0.06348201
+      outSlope: 0.06348201
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.22978877
+    - serializedVersion: 3
+      time: 1.0083251
+      value: 0.0047620833
+      inSlope: -1.8594781
+      outSlope: -1.8594781
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.12793556
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  directionChangeSmoothing: 5
+  maxSlopeAngle: 55
+  maxBounces: 5
+  skinWidth: 0.015
+  rotSpeed: 0.4
+  minYAngle: -45
+  maxYAngle: 45
+  maxSprintMod: 2
+  maxCrouchSpeed: 0.5
+  jumpVelocity: 30
+  gravityScale: 4
+  maxStairheight: 0.6
+  stepSmoothing: 0.1
+  minHeight: 6
+  wallRunMaxDist: 20
+  wallRunCoolDown: 0.2
+  camRotPoint: {fileID: 8284132789359688155}
+  collideLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!114 &8036465444530213857
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -252,7 +333,7 @@ MonoBehaviour:
   m_ActionEvents:
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4722565026801790198}
+      - m_Target: {fileID: 2278909802905226999}
         m_TargetAssemblyTypeName: CollideAndSlideController, Assembly-CSharp
         m_MethodName: MoveDir
         m_Mode: 0
@@ -268,7 +349,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Move[/Keyboard/w,/Keyboard/upArrow,/Keyboard/s,/Keyboard/downArrow,/Keyboard/a,/Keyboard/leftArrow,/Keyboard/d,/Keyboard/rightArrow]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4722565026801790198}
+      - m_Target: {fileID: 2278909802905226999}
         m_TargetAssemblyTypeName: CollideAndSlideController, Assembly-CSharp
         m_MethodName: Look
         m_Mode: 0
@@ -284,7 +365,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Look[/Mouse/delta,/Pen/delta]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3698767906036118582}
+      - m_Target: {fileID: 153947711928997032}
         m_TargetAssemblyTypeName: Shooting, Assembly-CSharp
         m_MethodName: ShootInput
         m_Mode: 0
@@ -304,7 +385,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Interact[/Keyboard/e]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4722565026801790198}
+      - m_Target: {fileID: 2278909802905226999}
         m_TargetAssemblyTypeName: CollideAndSlideController, Assembly-CSharp
         m_MethodName: CrouchToggle
         m_Mode: 0
@@ -320,7 +401,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Crouch[/Keyboard/c]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4722565026801790198}
+      - m_Target: {fileID: 2278909802905226999}
         m_TargetAssemblyTypeName: CollideAndSlideController, Assembly-CSharp
         m_MethodName: Jump
         m_Mode: 0
@@ -340,7 +421,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Previous[/Keyboard/1]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 2278909802905226999}
         m_TargetAssemblyTypeName: CollideAndSlideController, Assembly-CSharp
         m_MethodName: SprintToggle
         m_Mode: 0
@@ -356,7 +437,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Next[/Keyboard/2]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4722565026801790198}
+      - m_Target: {fileID: 2278909802905226999}
         m_TargetAssemblyTypeName: CollideAndSlideController, Assembly-CSharp
         m_MethodName: SprintToggle
         m_Mode: 0
@@ -412,7 +493,7 @@ MonoBehaviour:
     m_ActionName: UI/TrackedDeviceOrientation
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3698767906036118582}
+      - m_Target: {fileID: 153947711928997032}
         m_TargetAssemblyTypeName: Shooting, Assembly-CSharp
         m_MethodName: ReloadInput
         m_Mode: 0
@@ -424,96 +505,14 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-    m_ActionId: 16d43a1c-97ff-4c7d-926c-542465c7a6a0
+    m_ActionId: 576130ab-6049-44e4-8084-274cb5214e78
     m_ActionName: 'Player/Reload[/Keyboard/r]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &4722565026801790198
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4038720357806462293}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 806bb96ded2483244bfc6f34e2139935, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CollideAndSlideController
-  maxSpeed: 0.35
-  accelerationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0.009246826
-      value: 0.49868774
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 2.0000138
-      value: 1.0031435
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  deaccelerationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0.029167175
-      value: 0.9904785
-      inSlope: 0.19619314
-      outSlope: 0.19619314
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 1
-    - serializedVersion: 3
-      time: 1.0083251
-      value: 0.0047620833
-      inSlope: -1.8594781
-      outSlope: -1.8594781
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.12793556
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  directionChangeSmoothing: 5
-  maxSlopeAngle: 55
-  maxBounces: 5
-  skinWidth: 0.015
-  rotSpeed: 0.4
-  minYAngle: -90
-  maxYAngle: 90
-  maxSprintMod: 2
-  maxCrouchSpeed: 0.5
-  maxAirSpeedMod: 1
-  jumpVelocity: 30
-  gravityScale: 4
-  maxStairheight: 0.6
-  stepSmoothing: 0.1
-  minHeight: 6
-  wallRunMaxDist: 40
-  wallRunCoolDown: 0.1
-  camRotPoint: {fileID: 8284132789359688155}
-  collideLayer:
-    serializedVersion: 2
-    m_Bits: 64
---- !u!114 &3698767906036118582
+--- !u!114 &153947711928997032
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -527,13 +526,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Shooting
   shootDelay: 0.3
   isFullyAuto: 1
-  bulletSpreadVariance: {x: 0, y: 0}
+  bulletSpreadVariance: {x: 0.1, y: 0.1}
   numBulletsPerShot: 1
   firePoint: {fileID: 0}
   magSize: 10
-  magCount: 50
-  reloadTime: 0.2
-  range: 150
+  magCount: 5
+  reloadTime: 0.5
+  range: 100
 --- !u!1 &5820171858258551605
 GameObject:
   m_ObjectHideFlags: 0
@@ -623,7 +622,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &7977737473634744957
+--- !u!1 &8284132789359688155
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -631,46 +630,80 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 425484589043412460}
-  - component: {fileID: 7013950002236342744}
-  - component: {fileID: 3027690093451818552}
+  - component: {fileID: 7293728296123613014}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: CamRotPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &425484589043412460
+--- !u!4 &7293728296123613014
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7977737473634744957}
+  m_GameObject: {fileID: 8284132789359688155}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.768, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1040581778673598639}
+  - {fileID: 6076451278460789485}
+  - {fileID: 8000584601941741862}
+  m_Father: {fileID: 7742221735477402439}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8412351019902716341
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1040581778673598639}
+  - component: {fileID: 5534799077771381154}
+  - component: {fileID: 5538431947537975119}
+  m_Layer: 0
+  m_Name: Gun
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1040581778673598639
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8412351019902716341}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.464, y: -0.6379999, z: 0.481}
+  m_LocalPosition: {x: 0.53300095, y: -0.6379999, z: 0.45999908}
   m_LocalScale: {x: 0.10141182, y: 0.27859622, z: 1.7667701}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7293728296123613014}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &7013950002236342744
+--- !u!33 &5534799077771381154
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7977737473634744957}
+  m_GameObject: {fileID: 8412351019902716341}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &3027690093451818552
+--- !u!23 &5538431947537975119
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7977737473634744957}
+  m_GameObject: {fileID: 8412351019902716341}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -712,40 +745,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &8284132789359688155
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7293728296123613014}
-  m_Layer: 0
-  m_Name: CamRotPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7293728296123613014
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8284132789359688155}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.768, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 6076451278460789485}
-  - {fileID: 8000584601941741862}
-  - {fileID: 425484589043412460}
-  m_Father: {fileID: 7742221735477402439}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8752453261259194612
 GameObject:
   m_ObjectHideFlags: 0
